@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrainSprint | Free Quiz & Cash Prizes</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between items-center p-3 sm:p-6">
+
+  <!-- Top Navigation Header -->
+  <header class="w-full max-w-md flex justify-between items-center py-3 px-4 bg-gray-900 border border-gray-800 rounded-xl shadow-lg">
+    <div class="flex items-center space-x-2">
+      <span class="text-2xl">⚡</span>
+      <h1 class="text-xl font-black text-amber-400 tracking-wide">BrainSprint</h1>
+    </div>
+    <div class="flex items-center space-x-2">
+      <span class="text-xs text-gray-400">Level</span>
+      <span id="playerLevel" class="text-sm font-extrabold bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30">1</span>
+    </div>
+  </header>
+
+  <!-- Main App Container -->
+  <main class="w-full max-w-md my-4 space-y-4">
+
+    <!-- Player Profile & Stats Strip -->
+    <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl flex justify-between items-center text-xs">
+      <div>
+        <p class="text-gray-400">Player Handle</p>
+        <p id="profileName" class="text-sm font-bold text-slate-200">Guest User</p>
+      </div>
+      <div>
+        <p class="text-gray-400">Total XP</p>
+        <p id="profileXP" class="text-sm font-bold text-amber-400">0 XP</p>
+      </div>
+      <div>
+        <p class="text-gray-400">Weekly Score</p>
+        <p id="profileWeekly" class="text-sm font-bold text-green-400">0 pts</p>
+      </div>
+    </div>
+
+    <!-- Prize Incentive Banner -->
+    <div class="bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 p-4 rounded-xl text-center shadow-lg border border-amber-500/30">
+      <p class="text-xs uppercase font-semibold text-amber-100 tracking-wider">Weekly Sponsored Pool</p>
+      <h2 class="text-3xl font-black text-white mt-0.5">UGX 25,000</h2>
+      <p class="text-xs text-amber-100 mt-1">Play levels for free. Top 3 scores on Sunday win mobile money payouts.</p>
+    </div>
+
+    <!-- Dynamic Game View Container -->
+    <section id="gameCard" class="bg-gray-900 p-5 rounded-xl border border-gray-800 shadow-xl relative overflow-hidden">
+      <!-- Content populated dynamically by js/app.js -->
+    </section>
+
+    <!-- Top Leaderboard Container -->
+    <section class="bg-gray-900 p-4 rounded-xl border border-gray-800">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Weekly Top Contenders</h3>
+        <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded">Resets Sunday</span>
+      </div>
+      <ul id="leaderboardList" class="space-y-2 text-xs">
+        <!-- Populated dynamically by js/leaderboard.js -->
+      </ul>
+    </section>
+
+    <!-- Google AdSense Placeholder Slot -->
+    <div class="w-full py-3 bg-gray-900 border border-dashed border-gray-800 rounded-xl flex flex-col items-center justify-center text-[11px] text-gray-500">
+      <span>ADVERTISEMENT</span>
+      <span class="text-[9px] text-gray-600">Google AdSense / Unity Ad Slot</span>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full max-w-md text-center py-2 text-[10px] text-gray-600">
+    BrainSprint Platform &copy; 2026. Strictly Free-to-Play. No buy-ins required.
+  </footer>
+
+  <!-- Scripts -->
+  <script src="questions.js"></script>
+  <script src="leaderboard.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
