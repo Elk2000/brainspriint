@@ -4,14 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BrainSprint | Free Quiz & Cash Prizes</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Custom Styles -->
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.25s ease-out forwards; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+  </style>
 </head>
 <body class="bg-gray-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between items-center p-3 sm:p-6">
 
-  <!-- Top Navigation Header -->
+  <!-- Header -->
   <header class="w-full max-w-md flex justify-between items-center py-3 px-4 bg-gray-900 border border-gray-800 rounded-xl shadow-lg">
     <div class="flex items-center space-x-2">
       <span class="text-2xl">⚡</span>
@@ -23,10 +30,9 @@
     </div>
   </header>
 
-  <!-- Main App Container -->
+  <!-- Main App -->
   <main class="w-full max-w-md my-4 space-y-4">
 
-    <!-- Player Profile & Stats Strip -->
     <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl flex justify-between items-center text-xs">
       <div>
         <p class="text-gray-400">Player Handle</p>
@@ -42,30 +48,22 @@
       </div>
     </div>
 
-    <!-- Prize Incentive Banner -->
     <div class="bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 p-4 rounded-xl text-center shadow-lg border border-amber-500/30">
       <p class="text-xs uppercase font-semibold text-amber-100 tracking-wider">Weekly Sponsored Pool</p>
       <h2 class="text-3xl font-black text-white mt-0.5">UGX 25,000</h2>
       <p class="text-xs text-amber-100 mt-1">Play levels for free. Top 3 scores on Sunday win mobile money payouts.</p>
     </div>
 
-    <!-- Dynamic Game View Container -->
-    <section id="gameCard" class="bg-gray-900 p-5 rounded-xl border border-gray-800 shadow-xl relative overflow-hidden">
-      <!-- Content populated dynamically by js/app.js -->
-    </section>
+    <section id="gameCard" class="bg-gray-900 p-5 rounded-xl border border-gray-800 shadow-xl relative overflow-hidden"></section>
 
-    <!-- Top Leaderboard Container -->
     <section class="bg-gray-900 p-4 rounded-xl border border-gray-800">
       <div class="flex justify-between items-center mb-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Weekly Top Contenders</h3>
         <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded">Resets Sunday</span>
       </div>
-      <ul id="leaderboardList" class="space-y-2 text-xs">
-        <!-- Populated dynamically by js/leaderboard.js -->
-      </ul>
+      <ul id="leaderboardList" class="space-y-2 text-xs"></ul>
     </section>
 
-    <!-- Google AdSense Placeholder Slot -->
     <div class="w-full py-3 bg-gray-900 border border-dashed border-gray-800 rounded-xl flex flex-col items-center justify-center text-[11px] text-gray-500">
       <span>ADVERTISEMENT</span>
       <span class="text-[9px] text-gray-600">Google AdSense / Unity Ad Slot</span>
@@ -73,15 +71,205 @@
 
   </main>
 
-  <!-- Footer -->
   <footer class="w-full max-w-md text-center py-2 text-[10px] text-gray-600">
-    BrainSprint Platform &copy; 2026. Strictly Free-to-Play. No buy-ins required.
+    BrainSprint Platform &copy; 2026. Strictly Free-to-Play.
   </footer>
 
-  <!-- Scripts -->
-  <script src="questions.js"></script>
-  <script src="leaderboard.js"></script>
-  <script src="app.js"></script>
+  <script>
+    const QUESTION_BANK = {
+      1: [
+        { q: "What is the capital city of Uganda?", options: ["Jinja", "Kampala", "Gulu", "Entebbe"], correct: 1 },
+        { q: "Which tool is commonly used for software version control?", options: ["Git", "Proteus", "MSYS2", "Vercel"], correct: 0 },
+        { q: "What web technology provides structural layout to web pages?", options: ["CSS", "HTML", "JavaScript", "SQL"], correct: 1 }
+      ],
+      2: [
+        { q: "Which programming language runs natively inside all modern web browsers?", options: ["Java", "C++", "JavaScript", "Python"], correct: 2 },
+        { q: "What type of backend database stores data in document key-value formats?", options: ["Relational/SQL", "NoSQL", "Assembly", "Flat-file"], correct: 1 },
+        { q: "In HTTP responses, what status code represents 'Not Found'?", options: ["200", "500", "404", "302"], correct: 2 }
+      ],
+      3: [
+        { q: "What is the primary function of CSS Flexbox and Grid?", options: ["Database Querying", "User Authentication", "UI Layout & Styling", "Compiler Optimization"], correct: 2 },
+        { q: "Which HTTP method is typically used to create a new resource on a server?", options: ["GET", "POST", "DELETE", "OPTIONS"], correct: 1 },
+        { q: "What does API stand for in software engineering?", options: ["Application Programming Interface", "Automated Process Integration", "App Performance Index", "Array Processing Instruction"], correct: 0 }
+      ]
+    };
+
+    const Leaderboard = {
+      mockData: [
+        { name: "Kato_M", score: 1450 },
+        { name: "Opio_Tech", score: 1210 },
+        { name: "Namu_Dev", score: 980 },
+        { name: "Sarah_K", score: 850 },
+        { name: "Mutesi_R", score: 620 }
+      ],
+      getScores: function() {
+        const stored = localStorage.getItem("bs_leaderboard");
+        if (!stored) {
+          localStorage.setItem("bs_leaderboard", JSON.stringify(this.mockData));
+          return this.mockData;
+        }
+        return JSON.parse(stored);
+      },
+      submitScore: function(playerName, score) {
+        let scores = this.getScores();
+        const existingIndex = scores.findIndex(p => p.name.toLowerCase() === playerName.toLowerCase());
+        if (existingIndex !== -1) {
+          if (score > scores[existingIndex].score) scores[existingIndex].score = score;
+        } else {
+          scores.push({ name: playerName, score: score });
+        }
+        scores.sort((a, b) => b.score - a.score);
+        scores = scores.slice(0, 5);
+        localStorage.setItem("bs_leaderboard", JSON.stringify(scores));
+        this.render();
+      },
+      render: function() {
+        const listElement = document.getElementById("leaderboardList");
+        const scores = this.getScores();
+        listElement.innerHTML = scores.map((player, index) => {
+          const badgeColor = index === 0 ? "text-amber-400 font-black" : index === 1 ? "text-slate-300 font-bold" : index === 2 ? "text-amber-600 font-bold" : "text-gray-400";
+          return `
+            <li class="flex justify-between items-center bg-gray-950 p-2 rounded border border-gray-800/80">
+              <div class="flex items-center space-x-2">
+                <span class="${badgeColor} w-4 text-center">${index + 1}.</span>
+                <span class="text-slate-200 font-medium">${player.name}</span>
+              </div>
+              <span class="text-amber-400 font-bold">${player.score.toLocaleString()} pts</span>
+            </li>
+          `;
+        }).join('');
+      }
+    };
+
+    const App = {
+      player: { name: "Guest", xp: 0, level: 1, weeklyScore: 0 },
+      gameState: { currentLevel: 1, questionIndex: 0, currentScore: 0, timer: null, timeLeft: 15 },
+      init: function() {
+        this.loadPlayerData();
+        Leaderboard.render();
+        this.renderStartScreen();
+      },
+      loadPlayerData: function() {
+        const saved = localStorage.getItem("bs_player_data");
+        if (saved) {
+          this.player = JSON.parse(saved);
+        } else {
+          this.player.name = "Player_" + Math.floor(1000 + Math.random() * 9000);
+          this.savePlayerData();
+        }
+        this.updateProfileUI();
+      },
+      savePlayerData: function() {
+        localStorage.setItem("bs_player_data", JSON.stringify(this.player));
+        this.updateProfileUI();
+      },
+      updateProfileUI: function() {
+        document.getElementById("profileName").innerText = this.player.name;
+        document.getElementById("profileXP").innerText = `${this.player.xp} XP`;
+        document.getElementById("profileWeekly").innerText = `${this.player.weeklyScore} pts`;
+        document.getElementById("playerLevel").innerText = this.player.level;
+      },
+      renderStartScreen: function() {
+        const card = document.getElementById("gameCard");
+        card.innerHTML = `
+          <div class="text-center space-y-4 animate-fade-in">
+            <h3 class="text-lg font-bold text-white">Ready for Level ${this.player.level}?</h3>
+            <p class="text-xs text-gray-400 leading-relaxed">
+              Answer correctly before time runs out. Gain XP to unlock higher levels and earn Weekly Score points for cash payouts.
+            </p>
+            <button id="startBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 px-4 rounded-xl transition shadow-lg text-sm uppercase tracking-wider">
+              Start Quiz (Level ${this.player.level})
+            </button>
+          </div>
+        `;
+        document.getElementById("startBtn").onclick = () => this.startQuiz();
+      },
+      startQuiz: function() {
+        this.gameState.currentScore = 0;
+        this.gameState.questionIndex = 0;
+        this.renderQuestion();
+      },
+      renderQuestion: function() {
+        clearInterval(this.gameState.timer);
+        this.gameState.timeLeft = 15;
+        const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
+        const q = levelQuestions[this.gameState.questionIndex];
+        const card = document.getElementById("gameCard");
+        card.innerHTML = `
+          <div class="animate-fade-in">
+            <div class="flex justify-between items-center text-xs text-gray-400 mb-3 border-b border-gray-800 pb-2">
+              <span>Q ${this.gameState.questionIndex + 1} of ${levelQuestions.length}</span>
+              <span>Time: <strong id="timerDisplay" class="text-amber-400">${this.gameState.timeLeft}s</strong></span>
+              <span>Points: <strong class="text-green-400">${this.gameState.currentScore}</strong></span>
+            </div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-100 mb-4">${q.q}</h3>
+            <div id="optionsContainer" class="space-y-2.5">
+              ${q.options.map((opt, idx) => `
+                <button onclick="App.handleAnswer(${idx})" class="w-full text-left bg-gray-800 hover:bg-gray-700 border border-gray-700/60 p-3 rounded-lg text-xs font-semibold text-slate-200 transition">
+                  ${opt}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        this.startTimer();
+      },
+      startTimer: function() {
+        const timerDisplay = document.getElementById("timerDisplay");
+        this.gameState.timer = setInterval(() => {
+          this.gameState.timeLeft--;
+          if (timerDisplay) timerDisplay.innerText = `${this.gameState.timeLeft}s`;
+          if (this.gameState.timeLeft <= 0) {
+            clearInterval(this.gameState.timer);
+            this.handleAnswer(-1);
+          }
+        }, 1000);
+      },
+      handleAnswer: function(selectedIndex) {
+        clearInterval(this.gameState.timer);
+        const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
+        const q = levelQuestions[this.gameState.questionIndex];
+        if (selectedIndex === q.correct) {
+          const earned = 100 + (this.gameState.timeLeft * 10);
+          this.gameState.currentScore += earned;
+        }
+        this.gameState.questionIndex++;
+        if (this.gameState.questionIndex < levelQuestions.length) {
+          this.renderQuestion();
+        } else {
+          this.completeLevel();
+        }
+      },
+      completeLevel: function() {
+        const finalScore = this.gameState.currentScore;
+        const xpGained = Math.floor(finalScore / 2);
+        this.player.xp += xpGained;
+        this.player.weeklyScore += finalScore;
+        const newLevel = Math.min(3, Math.floor(this.player.xp / 500) + 1);
+        const leveledUp = newLevel > this.player.level;
+        this.player.level = newLevel;
+        this.savePlayerData();
+        Leaderboard.submitScore(this.player.name, this.player.weeklyScore);
+        const card = document.getElementById("gameCard");
+        card.innerHTML = `
+          <div class="text-center space-y-4 animate-fade-in">
+            <h3 class="text-xl font-black text-amber-400">Level Complete!</h3>
+            <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 space-y-1 text-xs">
+              <p class="text-gray-400">Session Score: <strong class="text-white">${finalScore} pts</strong></p>
+              <p class="text-gray-400">XP Gained: <strong class="text-amber-400">+${xpGained} XP</strong></p>
+              ${leveledUp ? `<p class="text-green-400 font-bold mt-1">🎉 Level Up! You unlocked Level ${newLevel}!</p>` : ''}
+            </div>
+            <button id="playAgainBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 rounded-xl transition text-sm uppercase tracking-wider">
+              Continue
+            </button>
+          </div>
+        `;
+        document.getElementById("playAgainBtn").onclick = () => this.renderStartScreen();
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", () => App.init());
+  </script>
 </body>
 </html>
 
