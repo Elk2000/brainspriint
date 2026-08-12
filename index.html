@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BrainSprint | Free Quiz & Cash Prizes</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
@@ -58,10 +60,12 @@
 
     <section class="bg-gray-900 p-4 rounded-xl border border-gray-800">
       <div class="flex justify-between items-center mb-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Weekly Top Contenders</h3>
-        <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded">Resets Sunday</span>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Global Leaderboard</h3>
+        <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded">Live Sync</span>
       </div>
-      <ul id="leaderboardList" class="space-y-2 text-xs"></ul>
+      <ul id="leaderboardList" class="space-y-2 text-xs">
+        <li class="text-center text-gray-500 py-2">Loading scores...</li>
+      </ul>
     </section>
 
     <div class="w-full py-3 bg-gray-900 border border-dashed border-gray-800 rounded-xl flex flex-col items-center justify-center text-[11px] text-gray-500">
@@ -76,6 +80,11 @@
   </footer>
 
   <script>
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = "https://fyhxysjkvtmstmcsbcee.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_ye6Ajwobpe7waY9Wr-czcw_CzzA0eEG";
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
     const QUESTION_BANK = {
       1: [
         { q: "What is the capital city of Uganda?", options: ["Jinja", "Kampala", "Gulu", "Entebbe"], correct: 1 },
@@ -95,37 +104,35 @@
     };
 
     const Leaderboard = {
-      mockData: [
-        { name: "Kato_M", score: 1450 },
-        { name: "Opio_Tech", score: 1210 },
-        { name: "Namu_Dev", score: 980 },
-        { name: "Sarah_K", score: 850 },
-        { name: "Mutesi_R", score: 620 }
-      ],
-      getScores: function() {
-        const stored = localStorage.getItem("bs_leaderboard");
-        if (!stored) {
-          localStorage.setItem("bs_leaderboard", JSON.stringify(this.mockData));
-          return this.mockData;
+      getScores: async function() {
+        if (!supabase || SUPABASE_URL.includes("YOUR_SUPABASE")) {
+          return JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
         }
-        return JSON.parse(stored);
+        const { data, error } = await supabase
+          .from('leaderboard')
+          .select('player_name, score')
+          .order('score', { ascending: false })
+          .limit(5);
+
+        return error ? [] : data.map(d => ({ name: d.player_name, score: d.score }));
       },
-      submitScore: function(playerName, score) {
-        let scores = this.getScores();
-        const existingIndex = scores.findIndex(p => p.name.toLowerCase() === playerName.toLowerCase());
-        if (existingIndex !== -1) {
-          if (score > scores[existingIndex].score) scores[existingIndex].score = score;
-        } else {
-          scores.push({ name: playerName, score: score });
+
+      submitScore: async function(playerName, score) {
+        if (supabase && !SUPABASE_URL.includes("YOUR_SUPABASE")) {
+          await supabase.from('leaderboard').insert([{ player_name: playerName, score: score }]);
         }
-        scores.sort((a, b) => b.score - a.score);
-        scores = scores.slice(0, 5);
-        localStorage.setItem("bs_leaderboard", JSON.stringify(scores));
         this.render();
       },
-      render: function() {
+
+      render: async function() {
         const listElement = document.getElementById("leaderboardList");
-        const scores = this.getScores();
+        const scores = await this.getScores();
+
+        if (scores.length === 0) {
+          listElement.innerHTML = `<li class="text-center text-gray-500 py-2">No high scores yet. Play to set the record!</li>`;
+          return;
+        }
+
         listElement.innerHTML = scores.map((player, index) => {
           const badgeColor = index === 0 ? "text-amber-400 font-black" : index === 1 ? "text-slate-300 font-bold" : index === 2 ? "text-amber-600 font-bold" : "text-gray-400";
           return `
@@ -272,4 +279,3 @@
   </script>
 </body>
 </html>
-
