@@ -54,7 +54,12 @@
       <p class="text-xs text-amber-100 mt-1">Play levels for free. Top 3 scores on Sunday win mobile money payouts.</p>
     </div>
 
-    <section id="gameCard" class="bg-gray-900 p-5 rounded-xl border border-gray-800 shadow-xl relative overflow-hidden"></section>
+    <!-- Game Container Card -->
+    <section id="gameCard" class="bg-gray-900 p-5 rounded-xl border border-gray-800 shadow-xl relative overflow-hidden">
+      <div class="text-center py-4">
+        <p class="text-sm text-gray-400">Initializing BrainSprint...</p>
+      </div>
+    </section>
 
     <section class="bg-gray-900 p-4 rounded-xl border border-gray-800">
       <div class="flex justify-between items-center mb-3">
@@ -78,10 +83,8 @@
   </footer>
 
   <script>
-    // --- DIRECT API CONFIGURATION ---
     const SUPABASE_URL = "https://fyhxysjkvtmstmcsbcee.supabase.co";
-    // PASTE YOUR ANON KEY (starting with eyJhbGci...) HERE
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aHh5c2prdnRtc3RtY3NiY2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDgyOTgsImV4cCI6MjEwMjEyNDI5OH0.tkvLTvDuvG04ZRFVqwQVeQWD-r4l2cg50Q4MPZWkIo8"; 
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aHh5c2prdnRtc3RtY3NiY2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDgyOTgsImV4cCI6MjEwMjEyNDI5OH0.tkvLTvDuvG04ZRFVqwQVeQWD-r4l2cg50Q4MPZWkIo8";
 
     const QUESTION_BANK = {
       1: [
@@ -101,105 +104,45 @@
       ]
     };
 
-    const Leaderboard = {
-      getScores: async function() {
-        if (!SUPABASE_KEY || SUPABASE_KEY.includes("YOUR_ANON_KEY")) {
-          return JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
-        }
-        try {
-          const res = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score&order=score.desc&limit=5`, {
-            headers: {
-              "apikey": SUPABASE_KEY,
-              "Authorization": `Bearer ${SUPABASE_KEY}`
-            }
-          });
-          if (!res.ok) throw new Error("Fetch failed");
-          const data = await res.json();
-          return data.map(d => ({ name: d.player_name, score: d.score }));
-        } catch (err) {
-          return JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
-        }
-      },
-
-      submitScore: async function(playerName, score) {
-        // Save locally first
-        let localScores = JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
-        localScores.push({ name: playerName, score: score });
-        localScores.sort((a, b) => b.score - a.score);
-        localStorage.setItem("bs_leaderboard", JSON.stringify(localScores.slice(0, 5)));
-
-        // Submit directly to Supabase REST API
-        if (SUPABASE_KEY && !SUPABASE_KEY.includes("YOUR_ANON_KEY")) {
-          try {
-            await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
-              method: "POST",
-              headers: {
-                "apikey": SUPABASE_KEY,
-                "Authorization": `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal"
-              },
-              body: JSON.stringify({ player_name: playerName, score: score })
-            });
-          } catch (e) {
-            console.error("API Post error:", e);
-          }
-        }
-        this.render();
-      },
-
-      render: async function() {
-        const listElement = document.getElementById("leaderboardList");
-        const scores = await this.getScores();
-
-        if (!scores || scores.length === 0) {
-          listElement.innerHTML = `<li class="text-center text-gray-500 py-2">No high scores yet. Play to set the record!</li>`;
-          return;
-        }
-
-        listElement.innerHTML = scores.map((player, index) => {
-          const badgeColor = index === 0 ? "text-amber-400 font-black" : index === 1 ? "text-slate-300 font-bold" : index === 2 ? "text-amber-600 font-bold" : "text-gray-400";
-          return `
-            <li class="flex justify-between items-center bg-gray-950 p-2 rounded border border-gray-800/80">
-              <div class="flex items-center space-x-2">
-                <span class="${badgeColor} w-4 text-center">${index + 1}.</span>
-                <span class="text-slate-200 font-medium">${player.name}</span>
-              </div>
-              <span class="text-amber-400 font-bold">${player.score.toLocaleString()} pts</span>
-            </li>
-          `;
-        }).join('');
-      }
-    };
-
     const App = {
       player: { name: "Guest", xp: 0, level: 1, weeklyScore: 0 },
       gameState: { currentLevel: 1, questionIndex: 0, currentScore: 0, timer: null, timeLeft: 15 },
+      
       init: function() {
         this.loadPlayerData();
         this.renderStartScreen();
-        Leaderboard.render();
+        Leaderboard.fetchAndRender();
       },
+
       loadPlayerData: function() {
-        const saved = localStorage.getItem("bs_player_data");
-        if (saved) {
-          this.player = JSON.parse(saved);
-        } else {
-          this.player.name = "Player_" + Math.floor(1000 + Math.random() * 9000);
-          this.savePlayerData();
+        try {
+          const saved = localStorage.getItem("bs_player_data");
+          if (saved) {
+            this.player = JSON.parse(saved);
+          } else {
+            this.player.name = "Player_" + Math.floor(1000 + Math.random() * 9000);
+            this.savePlayerData();
+          }
+        } catch(e) {
+          this.player.name = "Player_1001";
         }
         this.updateProfileUI();
       },
+
       savePlayerData: function() {
-        localStorage.setItem("bs_player_data", JSON.stringify(this.player));
+        try {
+          localStorage.setItem("bs_player_data", JSON.stringify(this.player));
+        } catch(e) {}
         this.updateProfileUI();
       },
+
       updateProfileUI: function() {
         document.getElementById("profileName").innerText = this.player.name;
         document.getElementById("profileXP").innerText = `${this.player.xp} XP`;
         document.getElementById("profileWeekly").innerText = `${this.player.weeklyScore} pts`;
         document.getElementById("playerLevel").innerText = this.player.level;
       },
+
       renderStartScreen: function() {
         const card = document.getElementById("gameCard");
         card.innerHTML = `
@@ -208,24 +151,26 @@
             <p class="text-xs text-gray-400 leading-relaxed">
               Answer correctly before time runs out. Gain XP to unlock higher levels and earn Weekly Score points for cash payouts.
             </p>
-            <button id="startBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 px-4 rounded-xl transition shadow-lg text-sm uppercase tracking-wider">
+            <button id="startBtn" onclick="App.startQuiz()" class="w-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-gray-950 font-black py-3 px-4 rounded-xl transition shadow-lg text-sm uppercase tracking-wider cursor-pointer">
               Start Quiz (Level ${this.player.level})
             </button>
           </div>
         `;
-        document.getElementById("startBtn").onclick = () => this.startQuiz();
       },
+
       startQuiz: function() {
         this.gameState.currentScore = 0;
         this.gameState.questionIndex = 0;
         this.renderQuestion();
       },
+
       renderQuestion: function() {
         clearInterval(this.gameState.timer);
         this.gameState.timeLeft = 15;
         const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
         const q = levelQuestions[this.gameState.questionIndex];
         const card = document.getElementById("gameCard");
+        
         card.innerHTML = `
           <div class="animate-fade-in">
             <div class="flex justify-between items-center text-xs text-gray-400 mb-3 border-b border-gray-800 pb-2">
@@ -236,7 +181,7 @@
             <h3 class="text-sm sm:text-base font-bold text-slate-100 mb-4">${q.q}</h3>
             <div id="optionsContainer" class="space-y-2.5">
               ${q.options.map((opt, idx) => `
-                <button onclick="App.handleAnswer(${idx})" class="w-full text-left bg-gray-800 hover:bg-gray-700 border border-gray-700/60 p-3 rounded-lg text-xs font-semibold text-slate-200 transition">
+                <button onclick="App.handleAnswer(${idx})" class="w-full text-left bg-gray-800 hover:bg-gray-700 active:bg-gray-600 border border-gray-700/60 p-3 rounded-lg text-xs font-semibold text-slate-200 transition cursor-pointer">
                   ${opt}
                 </button>
               `).join('')}
@@ -245,6 +190,7 @@
         `;
         this.startTimer();
       },
+
       startTimer: function() {
         const timerDisplay = document.getElementById("timerDisplay");
         this.gameState.timer = setInterval(() => {
@@ -256,6 +202,7 @@
           }
         }, 1000);
       },
+
       handleAnswer: function(selectedIndex) {
         clearInterval(this.gameState.timer);
         const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
@@ -271,6 +218,7 @@
           this.completeLevel();
         }
       },
+
       completeLevel: function() {
         const finalScore = this.gameState.currentScore;
         const xpGained = Math.floor(finalScore / 2);
@@ -281,6 +229,7 @@
         this.player.level = newLevel;
         this.savePlayerData();
         Leaderboard.submitScore(this.player.name, this.player.weeklyScore);
+        
         const card = document.getElementById("gameCard");
         card.innerHTML = `
           <div class="text-center space-y-4 animate-fade-in">
@@ -290,16 +239,80 @@
               <p class="text-gray-400">XP Gained: <strong class="text-amber-400">+${xpGained} XP</strong></p>
               ${leveledUp ? `<p class="text-green-400 font-bold mt-1">🎉 Level Up! You unlocked Level ${newLevel}!</p>` : ''}
             </div>
-            <button id="playAgainBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 rounded-xl transition text-sm uppercase tracking-wider">
+            <button onclick="App.renderStartScreen()" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 rounded-xl transition text-sm uppercase tracking-wider cursor-pointer">
               Continue
             </button>
           </div>
         `;
-        document.getElementById("playAgainBtn").onclick = () => this.renderStartScreen();
       }
     };
 
-    document.addEventListener("DOMContentLoaded", () => App.init());
+    const Leaderboard = {
+      fetchAndRender: async function() {
+        const listElement = document.getElementById("leaderboardList");
+        let scores = [];
+
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score&order=score.desc&limit=5`, {
+            headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            scores = data.map(d => ({ name: d.player_name, score: d.score }));
+          }
+        } catch(e) {}
+
+        if (scores.length === 0) {
+          try {
+            scores = JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
+          } catch(e) { scores = []; }
+        }
+
+        if (scores.length === 0) {
+          listElement.innerHTML = `<li class="text-center text-gray-500 py-2">No high scores yet. Be the first to set one!</li>`;
+          return;
+        }
+
+        listElement.innerHTML = scores.map((player, index) => {
+          const badgeColor = index === 0 ? "text-amber-400 font-black" : index === 1 ? "text-slate-300 font-bold" : index === 2 ? "text-amber-600 font-bold" : "text-gray-400";
+          return `
+            <li class="flex justify-between items-center bg-gray-950 p-2 rounded border border-gray-800/80">
+              <div class="flex items-center space-x-2">
+                <span class="${badgeColor} w-4 text-center">${index + 1}.</span>
+                <span class="text-slate-200 font-medium">${player.name}</span>
+              </div>
+              <span class="text-amber-400 font-bold">${Number(player.score).toLocaleString()} pts</span>
+            </li>
+          `;
+        }).join('');
+      },
+
+      submitScore: async function(playerName, score) {
+        try {
+          let localScores = JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
+          localScores.push({ name: playerName, score: score });
+          localScores.sort((a, b) => b.score - a.score);
+          localStorage.setItem("bs_leaderboard", JSON.stringify(localScores.slice(0, 5)));
+        } catch(e) {}
+
+        try {
+          await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+            method: "POST",
+            headers: {
+              "apikey": SUPABASE_KEY,
+              "Authorization": `Bearer ${SUPABASE_KEY}`,
+              "Content-Type": "application/json",
+              "Prefer": "return=minimal"
+            },
+            body: JSON.stringify({ player_name: playerName, score: score })
+          });
+        } catch(e) {}
+
+        this.fetchAndRender();
+      }
+    };
+
+    window.addEventListener("DOMContentLoaded", () => App.init());
   </script>
 </body>
 </html>
