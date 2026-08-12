@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BrainSprint | Free Quiz & Cash Prizes</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
@@ -80,10 +78,10 @@
   </footer>
 
   <script>
-    // --- SUPABASE CONFIGURATION ---
+    // --- DIRECT API CONFIGURATION ---
     const SUPABASE_URL = "https://fyhxysjkvtmstmcsbcee.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aHh5c2prdnRtc3RtY3NiY2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDgyOTgsImV4cCI6MjEwMjEyNDI5OH0.tkvLTvDuvG04ZRFVqwQVeQWD-r4l2cg50Q4MPZWkIo8";
-    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+    // PASTE YOUR ANON KEY (starting with eyJhbGci...) HERE
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aHh5c2prdnRtc3RtY3NiY2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDgyOTgsImV4cCI6MjEwMjEyNDI5OH0.tkvLTvDuvG04ZRFVqwQVeQWD-r4l2cg50Q4MPZWkIo8"; 
 
     const QUESTION_BANK = {
       1: [
@@ -105,21 +103,47 @@
 
     const Leaderboard = {
       getScores: async function() {
-        if (!supabase || SUPABASE_URL.includes("YOUR_SUPABASE")) {
+        if (!SUPABASE_KEY || SUPABASE_KEY.includes("YOUR_ANON_KEY")) {
           return JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
         }
-        const { data, error } = await supabase
-          .from('leaderboard')
-          .select('player_name, score')
-          .order('score', { ascending: false })
-          .limit(5);
-
-        return error ? [] : data.map(d => ({ name: d.player_name, score: d.score }));
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=player_name,score&order=score.desc&limit=5`, {
+            headers: {
+              "apikey": SUPABASE_KEY,
+              "Authorization": `Bearer ${SUPABASE_KEY}`
+            }
+          });
+          if (!res.ok) throw new Error("Fetch failed");
+          const data = await res.json();
+          return data.map(d => ({ name: d.player_name, score: d.score }));
+        } catch (err) {
+          return JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
+        }
       },
 
       submitScore: async function(playerName, score) {
-        if (supabase && !SUPABASE_URL.includes("YOUR_SUPABASE")) {
-          await supabase.from('leaderboard').insert([{ player_name: playerName, score: score }]);
+        // Save locally first
+        let localScores = JSON.parse(localStorage.getItem("bs_leaderboard") || "[]");
+        localScores.push({ name: playerName, score: score });
+        localScores.sort((a, b) => b.score - a.score);
+        localStorage.setItem("bs_leaderboard", JSON.stringify(localScores.slice(0, 5)));
+
+        // Submit directly to Supabase REST API
+        if (SUPABASE_KEY && !SUPABASE_KEY.includes("YOUR_ANON_KEY")) {
+          try {
+            await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+              method: "POST",
+              headers: {
+                "apikey": SUPABASE_KEY,
+                "Authorization": `Bearer ${SUPABASE_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+              },
+              body: JSON.stringify({ player_name: playerName, score: score })
+            });
+          } catch (e) {
+            console.error("API Post error:", e);
+          }
         }
         this.render();
       },
@@ -128,7 +152,7 @@
         const listElement = document.getElementById("leaderboardList");
         const scores = await this.getScores();
 
-        if (scores.length === 0) {
+        if (!scores || scores.length === 0) {
           listElement.innerHTML = `<li class="text-center text-gray-500 py-2">No high scores yet. Play to set the record!</li>`;
           return;
         }
@@ -153,8 +177,8 @@
       gameState: { currentLevel: 1, questionIndex: 0, currentScore: 0, timer: null, timeLeft: 15 },
       init: function() {
         this.loadPlayerData();
-        Leaderboard.render();
         this.renderStartScreen();
+        Leaderboard.render();
       },
       loadPlayerData: function() {
         const saved = localStorage.getItem("bs_player_data");
