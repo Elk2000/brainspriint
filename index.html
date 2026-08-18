@@ -20,14 +20,13 @@
 
   <!-- Header -->
   <header class="w-full max-w-md flex justify-between items-center py-3 px-4 bg-gray-900 border border-gray-800 rounded-xl shadow-lg">
-    <div class="flex items-center space-x-2">
+    <div class="flex items-center space-x-2 cursor-pointer" onclick="App.renderLevelSelect()">
       <span class="text-2xl">⚡</span>
       <h1 class="text-xl font-black text-amber-400 tracking-wide">BrainSprint</h1>
     </div>
-    <div class="flex items-center space-x-2">
-      <span class="text-xs text-gray-400">Level</span>
-      <span id="playerLevel" class="text-sm font-extrabold bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30">1</span>
-    </div>
+    <button onclick="App.renderLevelSelect()" class="text-xs bg-gray-800 hover:bg-gray-700 text-amber-400 font-bold px-3 py-1.5 rounded-lg border border-gray-700 transition">
+      🎯 Levels
+    </button>
   </header>
 
   <!-- Main App -->
@@ -89,12 +88,6 @@
       </ul>
     </section>
 
-    <!-- Ad Unit Slot -->
-    <div class="w-full py-3 bg-gray-900 border border-dashed border-gray-800 rounded-xl flex flex-col items-center justify-center text-[11px] text-gray-500">
-      <span>ADVERTISEMENT</span>
-      <span class="text-[9px] text-gray-600">Google AdSense / Unity Ad Slot</span>
-    </div>
-
   </main>
 
   <!-- Profile Settings Modal -->
@@ -111,7 +104,6 @@
         <div>
           <label class="block text-gray-400 mb-1">Mobile Money Number (For Sunday Payouts)</label>
           <input type="tel" id="phoneInput" placeholder="07XXXXXXXX" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-amber-500">
-          <p class="text-[10px] text-gray-500 mt-1">Stored locally on your phone. Only used to contact top 3 weekly winners.</p>
         </div>
       </div>
 
@@ -123,45 +115,46 @@
     </div>
   </div>
 
-  <footer class="w-full max-w-md text-center py-2 text-[10px] text-gray-600">
-    BrainSprint Platform &copy; 2026. Strictly Free-to-Play.
-  </footer>
-
   <script>
     const SUPABASE_URL = "https://fyhxysjkvtmstmcsbcee.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aHh5c2prdnRtc3RtY3NiY2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDgyOTgsImV4cCI6MjEwMjEyNDI5OH0.tkvLTvDuvG04ZRFVqwQVeQWD-r4l2cg50Q4MPZWkIo8";
 
+    // Question Repository (Expandable Pool per Level)
     const QUESTION_BANK = {
       1: [
         { q: "What is the capital city of Uganda?", options: ["Jinja", "Kampala", "Gulu", "Entebbe"], correct: 1 },
         { q: "Which tool is commonly used for software version control?", options: ["Git", "Proteus", "MSYS2", "Vercel"], correct: 0 },
         { q: "What web technology provides structural layout to web pages?", options: ["CSS", "HTML", "JavaScript", "SQL"], correct: 1 },
         { q: "What primary currency is used in Uganda?", options: ["KSh", "UGX", "TZS", "USD"], correct: 1 },
-        { q: "Which protocol secures website connections over HTTPS?", options: ["FTP", "SSL/TLS", "SMTP", "UDP"], correct: 1 }
+        { q: "Which protocol secures website connections over HTTPS?", options: ["FTP", "SSL/TLS", "SMTP", "UDP"], correct: 1 },
+        { q: "What symbol is used for IDs in CSS selector styling?", options: [".", "#", "*", "&"], correct: 1 },
+        { q: "Which body of water is shared by Uganda, Kenya, and Tanzania?", options: ["Lake Albert", "Lake Kyoga", "Lake Victoria", "Lake Edward"], correct: 2 }
       ],
       2: [
         { q: "Which programming language runs natively inside all modern web browsers?", options: ["Java", "C++", "JavaScript", "Python"], correct: 2 },
         { q: "What type of database stores data in document key-value formats?", options: ["Relational/SQL", "NoSQL", "Assembly", "Flat-file"], correct: 1 },
         { q: "In HTTP responses, what status code represents 'Not Found'?", options: ["200", "500", "404", "302"], correct: 2 },
         { q: "What microchip platform is popular for IoT wireless projects?", options: ["ESP32", "AD8232", "MPU6050", "Intel i7"], correct: 0 },
-        { q: "Which CSS framework utilizes utility classes like 'p-4' and 'text-center'?", options: ["Bootstrap", "Tailwind CSS", "Bulma", "Sass"], correct: 1 }
+        { q: "Which CSS framework utilizes utility classes like 'p-4' and 'text-center'?", options: ["Bootstrap", "Tailwind CSS", "Bulma", "Sass"], correct: 1 },
+        { q: "What function parses a JSON string into a JavaScript object?", options: ["JSON.stringify()", "JSON.parse()", "Object.assign()", "Math.floor()"], correct: 1 }
       ],
       3: [
         { q: "What is the primary function of CSS Flexbox and Grid?", options: ["Database Querying", "User Authentication", "UI Layout & Styling", "Compiler Optimization"], correct: 2 },
         { q: "Which HTTP method is typically used to create a new resource on a server?", options: ["GET", "POST", "DELETE", "OPTIONS"], correct: 1 },
         { q: "What does API stand for in software engineering?", options: ["Application Programming Interface", "Automated Process Integration", "App Performance Index", "Array Processing Instruction"], correct: 0 },
         { q: "Which tool is standard for compiling C code in MSYS2 on Windows?", options: ["Clang", "GCC", "MSVC", "NVCC"], correct: 1 },
-        { q: "What cloud database feature allows querying tables via REST endpoints without custom backend code?", options: ["Supabase REST API", "Cron Job", "Redis Cache", "Docker Compose"], correct: 0 }
+        { q: "What cloud database feature allows querying tables via REST endpoints directly?", options: ["Supabase REST API", "Cron Job", "Redis Cache", "Docker Compose"], correct: 0 },
+        { q: "In multi-threaded C programming, what synchronization primitive prevents data races?", options: ["Mutex", "Pointer", "Malloc", "Header File"], correct: 0 }
       ]
     };
 
     const App = {
-      player: { name: "Guest", phone: "", xp: 0, level: 1, weeklyScore: 0 },
-      gameState: { currentLevel: 1, questionIndex: 0, currentScore: 0, correctAnswersCount: 0, timer: null, timeLeft: 15 },
+      player: { name: "Guest", phone: "", xp: 0, unlockedLevel: 1, weeklyScore: 0 },
+      gameState: { activeLevel: 1, currentQuestions: [], questionIndex: 0, currentScore: 0, correctAnswersCount: 0, timer: null, timeLeft: 15 },
       
       init: function() {
         this.loadPlayerData();
-        this.renderStartScreen();
+        this.renderLevelSelect();
         Leaderboard.fetchAndRender();
       },
 
@@ -169,7 +162,8 @@
         try {
           const saved = localStorage.getItem("bs_player_data");
           if (saved) {
-            this.player = JSON.parse(saved);
+            this.player = Object.assign(this.player, JSON.parse(saved));
+            if (!this.player.unlockedLevel) this.player.unlockedLevel = 1;
           } else {
             this.player.name = "Player_" + Math.floor(1000 + Math.random() * 9000);
             this.savePlayerData();
@@ -192,7 +186,6 @@
         document.getElementById("profileName").innerText = this.player.name || "Guest";
         document.getElementById("profileXP").innerText = `${this.player.xp} XP`;
         document.getElementById("profileWeekly").innerText = `${this.player.weeklyScore} pts`;
-        document.getElementById("playerLevel").innerText = this.player.level;
         document.getElementById("payoutPhoneDisplay").innerText = this.player.phone || "Not set (Tap to add)";
       },
 
@@ -205,28 +198,74 @@
       saveProfileDetails: function() {
         const nameVal = document.getElementById("usernameInput").value.trim();
         const phoneVal = document.getElementById("phoneInput").value.trim();
-        
         if (nameVal) this.player.name = nameVal;
         this.player.phone = phoneVal;
-        
         this.savePlayerData();
         document.getElementById("profileModal").classList.add("hidden");
-        this.renderStartScreen();
+        this.renderLevelSelect();
       },
 
-      renderStartScreen: function() {
+      // Render Level Selection Menu
+      renderLevelSelect: function() {
+        clearInterval(this.gameState.timer);
         const card = document.getElementById("gameCard");
+        const maxLevels = 3;
+        let levelsHTML = "";
+
+        for (let l = 1; l <= maxLevels; l++) {
+          const isUnlocked = l <= this.player.unlockedLevel;
+          levelsHTML += `
+            <div class="flex items-center justify-between p-3.5 rounded-xl border ${isUnlocked ? 'bg-gray-800/90 border-gray-700 hover:border-amber-500/50' : 'bg-gray-950/60 border-gray-800/60 opacity-60'} transition">
+              <div class="flex items-center space-x-3">
+                <span class="text-lg">${isUnlocked ? (l === this.player.unlockedLevel ? '🔥' : '✅') : '🔒'}</span>
+                <div>
+                  <h4 class="text-xs font-black text-white">Level ${l}</h4>
+                  <p class="text-[10px] text-gray-400">${isUnlocked ? 'Available to play' : 'Score 80%+ on Level ' + (l-1) + ' to unlock'}</p>
+                </div>
+              </div>
+              <button 
+                onclick="App.selectLevel(${l})" 
+                ${!isUnlocked ? 'disabled' : ''}
+                class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition ${isUnlocked ? 'bg-amber-500 text-gray-950 hover:bg-amber-400 cursor-pointer' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}">
+                ${isUnlocked ? 'Play' : 'Locked'}
+              </button>
+            </div>
+          `;
+        }
+
         card.innerHTML = `
-          <div class="text-center space-y-4 animate-fade-in">
-            <h3 class="text-lg font-bold text-white">Ready for Level ${this.player.level}?</h3>
-            <p class="text-xs text-gray-400 leading-relaxed">
-              Answer 5 questions. You must score <strong>80% or higher</strong> (4/5 correct) to qualify and unlock the next level!
-            </p>
-            <button id="startBtn" onclick="App.startQuiz()" class="w-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-gray-950 font-black py-3 px-4 rounded-xl transition shadow-lg text-sm uppercase tracking-wider cursor-pointer">
-              Start Level ${this.player.level}
-            </button>
+          <div class="space-y-3 animate-fade-in">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+              <h3 class="text-sm font-black text-white uppercase tracking-wide">Select Level</h3>
+              <span class="text-[10px] text-amber-400 font-semibold">Max Unlocked: Level ${this.player.unlockedLevel}</span>
+            </div>
+            <div class="space-y-2.5">
+              ${levelsHTML}
+            </div>
           </div>
         `;
+      },
+
+      selectLevel: function(levelNum) {
+        if (levelNum > this.player.unlockedLevel) return;
+        this.gameState.activeLevel = levelNum;
+        
+        // Prepare Fisher-Yates shuffled question set
+        const rawPool = QUESTION_BANK[levelNum] || QUESTION_BANK[1];
+        let shuffled = [...rawPool].sort(() => Math.random() - 0.5).slice(0, 5);
+        
+        // Shuffle answer options dynamically for each question
+        this.gameState.currentQuestions = shuffled.map(item => {
+          const optionsWithIndex = item.options.map((opt, i) => ({ text: opt, isCorrect: i === item.correct }));
+          optionsWithIndex.sort(() => Math.random() - 0.5);
+          return {
+            q: item.q,
+            options: optionsWithIndex.map(o => o.text),
+            correct: optionsWithIndex.findIndex(o => o.isCorrect)
+          };
+        });
+
+        this.startQuiz();
       },
 
       startQuiz: function() {
@@ -239,16 +278,15 @@
       renderQuestion: function() {
         clearInterval(this.gameState.timer);
         this.gameState.timeLeft = 15;
-        const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
-        const q = levelQuestions[this.gameState.questionIndex];
+        const q = this.gameState.currentQuestions[this.gameState.questionIndex];
         const card = document.getElementById("gameCard");
         
         card.innerHTML = `
           <div class="animate-fade-in">
             <div class="flex justify-between items-center text-xs text-gray-400 mb-3 border-b border-gray-800 pb-2">
-              <span>Q ${this.gameState.questionIndex + 1} of ${levelQuestions.length}</span>
+              <span class="font-bold text-amber-400">Level ${this.gameState.activeLevel}</span>
+              <span>Q ${this.gameState.questionIndex + 1} of ${this.gameState.currentQuestions.length}</span>
               <span>Time: <strong id="timerDisplay" class="text-amber-400">${this.gameState.timeLeft}s</strong></span>
-              <span>Points: <strong class="text-green-400">${this.gameState.currentScore}</strong></span>
             </div>
             <h3 class="text-sm sm:text-base font-bold text-slate-100 mb-4">${q.q}</h3>
             <div id="optionsContainer" class="space-y-2.5">
@@ -277,15 +315,14 @@
 
       handleAnswer: function(selectedIndex) {
         clearInterval(this.gameState.timer);
-        const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
-        const q = levelQuestions[this.gameState.questionIndex];
+        const q = this.gameState.currentQuestions[this.gameState.questionIndex];
         if (selectedIndex === q.correct) {
-          this.gameState.correctAnswersCount = (this.gameState.correctAnswersCount || 0) + 1;
+          this.gameState.correctAnswersCount++;
           const earned = 100 + (this.gameState.timeLeft * 10);
           this.gameState.currentScore += earned;
         }
         this.gameState.questionIndex++;
-        if (this.gameState.questionIndex < levelQuestions.length) {
+        if (this.gameState.questionIndex < this.gameState.currentQuestions.length) {
           this.renderQuestion();
         } else {
           this.completeLevel();
@@ -293,9 +330,8 @@
       },
 
       completeLevel: function() {
-        const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
-        const totalQuestions = levelQuestions.length;
-        const correctCount = this.gameState.correctAnswersCount || 0;
+        const totalQuestions = this.gameState.currentQuestions.length;
+        const correctCount = this.gameState.correctAnswersCount;
         const passAccuracy = (correctCount / totalQuestions) >= 0.80;
 
         const finalScore = this.gameState.currentScore;
@@ -307,12 +343,12 @@
         let levelMsg = "";
         
         if (passAccuracy) {
-          const newLevel = Math.min(3, this.player.level + 1);
-          if (newLevel > this.player.level) {
-            this.player.level = newLevel;
-            levelMsg = `<p class="text-green-400 font-bold mt-1">🎉 Passed with ${Math.round((correctCount/totalQuestions)*100)}%! Unlocked Level ${newLevel}!</p>`;
+          const newlyUnlocked = Math.min(3, this.gameState.activeLevel + 1);
+          if (newlyUnlocked > this.player.unlockedLevel) {
+            this.player.unlockedLevel = newlyUnlocked;
+            levelMsg = `<p class="text-green-400 font-bold mt-1">🎉 80%+ Passed! Level ${newlyUnlocked} Unlocked!</p>`;
           } else {
-            levelMsg = `<p class="text-amber-400 font-bold mt-1">🔥 Top tier performance! Max Level reached.</p>`;
+            levelMsg = `<p class="text-amber-400 font-bold mt-1">🔥 Excellent score recorded!</p>`;
           }
         } else {
           levelMsg = `<p class="text-red-400 font-bold mt-1">❌ Scored ${Math.round((correctCount/totalQuestions)*100)}% (${correctCount}/${totalQuestions}). Need 80%+ to unlock next level!</p>`;
@@ -325,17 +361,22 @@
         card.innerHTML = `
           <div class="text-center space-y-4 animate-fade-in">
             <h3 class="text-xl font-black ${passAccuracy ? 'text-amber-400' : 'text-slate-200'}">
-              ${passAccuracy ? 'Level Passed!' : 'Try Again!'}
+              ${passAccuracy ? 'Level Completed!' : 'Try Again!'}
             </h3>
             <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 space-y-1 text-xs">
-              <p class="text-gray-400">Score: <strong class="text-white">${finalScore} pts</strong></p>
-              <p class="text-gray-400">Accuracy: <strong class="${passAccuracy ? 'text-green-400' : 'text-red-400'}">${correctCount} / ${totalQuestions} Correct</strong></p>
+              <p class="text-gray-400">Score Earned: <strong class="text-white">${finalScore} pts</strong></p>
+              <p class="text-gray-400">Accuracy: <strong class="${passAccuracy ? 'text-green-400' : 'text-red-400'}">${correctCount} / ${totalQuestions} Correct (${Math.round((correctCount/totalQuestions)*100)}%)</strong></p>
               <p class="text-gray-400">XP Gained: <strong class="text-amber-400">+${xpGained} XP</strong></p>
               ${levelMsg}
             </div>
-            <button onclick="App.renderStartScreen()" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 rounded-xl transition text-sm uppercase tracking-wider cursor-pointer">
-              ${passAccuracy ? 'Continue' : 'Retry Level ' + this.player.level}
-            </button>
+            <div class="flex gap-2">
+              <button onclick="App.selectLevel(${this.gameState.activeLevel})" class="w-1/2 bg-gray-800 hover:bg-gray-700 text-slate-200 font-bold py-3 rounded-xl transition text-xs uppercase tracking-wider cursor-pointer">
+                Replay Lvl ${this.gameState.activeLevel}
+              </button>
+              <button onclick="App.renderLevelSelect()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 rounded-xl transition text-xs uppercase tracking-wider cursor-pointer">
+                Level Menu
+              </button>
+            </div>
           </div>
         `;
       }
