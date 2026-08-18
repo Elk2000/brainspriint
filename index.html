@@ -33,21 +33,38 @@
   <!-- Main App -->
   <main class="w-full max-w-md my-4 space-y-4">
 
-    <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl flex justify-between items-center text-xs">
-      <div>
-        <p class="text-gray-400">Player Handle</p>
-        <p id="profileName" class="text-sm font-bold text-slate-200">Guest User</p>
+    <!-- Profile & Settings Card -->
+    <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl space-y-3">
+      <div class="flex justify-between items-center text-xs">
+        <div>
+          <p class="text-gray-400">Player Handle</p>
+          <button onclick="App.openProfileModal()" class="text-sm font-bold text-amber-400 hover:underline flex items-center gap-1">
+            <span id="profileName">Guest User</span> ✏️
+          </button>
+        </div>
+        <div class="text-right">
+          <p class="text-gray-400">Total XP</p>
+          <p id="profileXP" class="text-sm font-bold text-amber-400">0 XP</p>
+        </div>
+        <div class="text-right">
+          <p class="text-gray-400">Weekly Score</p>
+          <p id="profileWeekly" class="text-sm font-bold text-green-400">0 pts</p>
+        </div>
       </div>
-      <div>
-        <p class="text-gray-400">Total XP</p>
-        <p id="profileXP" class="text-sm font-bold text-amber-400">0 XP</p>
-      </div>
-      <div>
-        <p class="text-gray-400">Weekly Score</p>
-        <p id="profileWeekly" class="text-sm font-bold text-green-400">0 pts</p>
+
+      <!-- Payout Details Banner -->
+      <div class="bg-gray-950 p-2.5 rounded-lg border border-gray-800/80 flex justify-between items-center text-xs">
+        <div>
+          <span class="text-gray-400 text-[11px]">Payout Number (MTN/Airtel):</span>
+          <p id="payoutPhoneDisplay" class="font-mono text-slate-200 font-medium">Not set</p>
+        </div>
+        <button onclick="App.openProfileModal()" class="bg-gray-800 hover:bg-gray-700 text-amber-400 px-2.5 py-1 rounded text-[11px] font-semibold border border-gray-700">
+          Edit Details
+        </button>
       </div>
     </div>
 
+    <!-- Tournament Banner -->
     <div class="bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 p-4 rounded-xl text-center shadow-lg border border-amber-500/30">
       <p class="text-xs uppercase font-semibold text-amber-100 tracking-wider">Weekly Sponsored Pool</p>
       <h2 class="text-3xl font-black text-white mt-0.5">UGX 25,000</h2>
@@ -61,6 +78,7 @@
       </div>
     </section>
 
+    <!-- Global Leaderboard -->
     <section class="bg-gray-900 p-4 rounded-xl border border-gray-800">
       <div class="flex justify-between items-center mb-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Global Leaderboard</h3>
@@ -71,12 +89,39 @@
       </ul>
     </section>
 
+    <!-- Ad Unit Slot -->
     <div class="w-full py-3 bg-gray-900 border border-dashed border-gray-800 rounded-xl flex flex-col items-center justify-center text-[11px] text-gray-500">
       <span>ADVERTISEMENT</span>
       <span class="text-[9px] text-gray-600">Google AdSense / Unity Ad Slot</span>
     </div>
 
   </main>
+
+  <!-- Profile Settings Modal -->
+  <div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-gray-900 border border-gray-800 p-5 rounded-xl w-full max-w-sm space-y-4 animate-fade-in shadow-2xl">
+      <h3 class="text-base font-bold text-white border-b border-gray-800 pb-2">Player Registration</h3>
+      
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-gray-400 mb-1">Custom Username / Handle</label>
+          <input type="text" id="usernameInput" maxlength="15" placeholder="e.g. BrainMaster" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-amber-500">
+        </div>
+        
+        <div>
+          <label class="block text-gray-400 mb-1">Mobile Money Number (For Sunday Payouts)</label>
+          <input type="tel" id="phoneInput" placeholder="07XXXXXXXX" class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-amber-500">
+          <p class="text-[10px] text-gray-500 mt-1">Stored locally on your phone. Only used to contact top 3 weekly winners.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="App.saveProfileDetails()" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-2.5 rounded-lg text-xs uppercase tracking-wider">
+          Save Profile
+        </button>
+      </div>
+    </div>
+  </div>
 
   <footer class="w-full max-w-md text-center py-2 text-[10px] text-gray-600">
     BrainSprint Platform &copy; 2026. Strictly Free-to-Play.
@@ -86,26 +131,33 @@
     const SUPABASE_URL = "https://fyhxysjkvtmstmcsbcee.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aHh5c2prdnRtc3RtY3NiY2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDgyOTgsImV4cCI6MjEwMjEyNDI5OH0.tkvLTvDuvG04ZRFVqwQVeQWD-r4l2cg50Q4MPZWkIo8";
 
+    // --- EXPANDED 5-QUESTION BANKS PER LEVEL ---
     const QUESTION_BANK = {
       1: [
         { q: "What is the capital city of Uganda?", options: ["Jinja", "Kampala", "Gulu", "Entebbe"], correct: 1 },
         { q: "Which tool is commonly used for software version control?", options: ["Git", "Proteus", "MSYS2", "Vercel"], correct: 0 },
-        { q: "What web technology provides structural layout to web pages?", options: ["CSS", "HTML", "JavaScript", "SQL"], correct: 1 }
+        { q: "What web technology provides structural layout to web pages?", options: ["CSS", "HTML", "JavaScript", "SQL"], correct: 1 },
+        { q: "What primary currency is used in Uganda?", options: ["KSh", "UGX", "TZS", "USD"], correct: 1 },
+        { q: "Which protocol secures website connections over HTTPS?", options: ["FTP", "SSL/TLS", "SMTP", "UDP"], correct: 1 }
       ],
       2: [
         { q: "Which programming language runs natively inside all modern web browsers?", options: ["Java", "C++", "JavaScript", "Python"], correct: 2 },
-        { q: "What type of backend database stores data in document key-value formats?", options: ["Relational/SQL", "NoSQL", "Assembly", "Flat-file"], correct: 1 },
-        { q: "In HTTP responses, what status code represents 'Not Found'?", options: ["200", "500", "404", "302"], correct: 2 }
+        { q: "What type of database stores data in document key-value formats?", options: ["Relational/SQL", "NoSQL", "Assembly", "Flat-file"], correct: 1 },
+        { q: "In HTTP responses, what status code represents 'Not Found'?", options: ["200", "500", "404", "302"], correct: 2 },
+        { q: "What microchip platform is popular for IoT wireless projects?", options: ["ESP32", "AD8232", "MPU6050", "Intel i7"], correct: 0 },
+        { q: "Which CSS framework utilizes utility classes like 'p-4' and 'text-center'?", options: ["Bootstrap", "Tailwind CSS", "Bulma", "Sass"], correct: 1 }
       ],
       3: [
         { q: "What is the primary function of CSS Flexbox and Grid?", options: ["Database Querying", "User Authentication", "UI Layout & Styling", "Compiler Optimization"], correct: 2 },
         { q: "Which HTTP method is typically used to create a new resource on a server?", options: ["GET", "POST", "DELETE", "OPTIONS"], correct: 1 },
-        { q: "What does API stand for in software engineering?", options: ["Application Programming Interface", "Automated Process Integration", "App Performance Index", "Array Processing Instruction"], correct: 0 }
+        { q: "What does API stand for in software engineering?", options: ["Application Programming Interface", "Automated Process Integration", "App Performance Index", "Array Processing Instruction"], correct: 0 },
+        { q: "Which tool is standard for compiling C code in MSYS2 on Windows?", options: ["Clang", "GCC", "MSVC", "NVCC"], correct: 1 },
+        { q: "What cloud database feature allows querying tables via REST endpoints without custom backend code?", options: ["Supabase REST API", "Cron Job", "Redis Cache", "Docker Compose"], correct: 0 }
       ]
     };
 
     const App = {
-      player: { name: "Guest", xp: 0, level: 1, weeklyScore: 0 },
+      player: { name: "Guest", phone: "", xp: 0, level: 1, weeklyScore: 0 },
       gameState: { currentLevel: 1, questionIndex: 0, currentScore: 0, timer: null, timeLeft: 15 },
       
       init: function() {
@@ -122,6 +174,7 @@
           } else {
             this.player.name = "Player_" + Math.floor(1000 + Math.random() * 9000);
             this.savePlayerData();
+            this.openProfileModal(); // Open registration modal for new users
           }
         } catch(e) {
           this.player.name = "Player_1001";
@@ -137,10 +190,29 @@
       },
 
       updateProfileUI: function() {
-        document.getElementById("profileName").innerText = this.player.name;
+        document.getElementById("profileName").innerText = this.player.name || "Guest";
         document.getElementById("profileXP").innerText = `${this.player.xp} XP`;
         document.getElementById("profileWeekly").innerText = `${this.player.weeklyScore} pts`;
         document.getElementById("playerLevel").innerText = this.player.level;
+        document.getElementById("payoutPhoneDisplay").innerText = this.player.phone || "Not set (Tap to add)";
+      },
+
+      openProfileModal: function() {
+        document.getElementById("usernameInput").value = this.player.name || "";
+        document.getElementById("phoneInput").value = this.player.phone || "";
+        document.getElementById("profileModal").classList.remove("hidden");
+      },
+
+      saveProfileDetails: function() {
+        const nameVal = document.getElementById("usernameInput").value.trim();
+        const phoneVal = document.getElementById("phoneInput").value.trim();
+        
+        if (nameVal) this.player.name = nameVal;
+        this.player.phone = phoneVal;
+        
+        this.savePlayerData();
+        document.getElementById("profileModal").classList.add("hidden");
+        this.renderStartScreen();
       },
 
       renderStartScreen: function() {
@@ -149,7 +221,7 @@
           <div class="text-center space-y-4 animate-fade-in">
             <h3 class="text-lg font-bold text-white">Ready for Level ${this.player.level}?</h3>
             <p class="text-xs text-gray-400 leading-relaxed">
-              Answer correctly before time runs out. Gain XP to unlock higher levels and earn Weekly Score points for cash payouts.
+              Answer 5 questions before time runs out. Gain XP to level up and accumulate Weekly Score points for cash payouts.
             </p>
             <button id="startBtn" onclick="App.startQuiz()" class="w-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-gray-950 font-black py-3 px-4 rounded-xl transition shadow-lg text-sm uppercase tracking-wider cursor-pointer">
               Start Quiz (Level ${this.player.level})
