@@ -131,7 +131,6 @@
     const SUPABASE_URL = "https://fyhxysjkvtmstmcsbcee.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aHh5c2prdnRtc3RtY3NiY2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDgyOTgsImV4cCI6MjEwMjEyNDI5OH0.tkvLTvDuvG04ZRFVqwQVeQWD-r4l2cg50Q4MPZWkIo8";
 
-    // --- EXPANDED 5-QUESTION BANKS PER LEVEL ---
     const QUESTION_BANK = {
       1: [
         { q: "What is the capital city of Uganda?", options: ["Jinja", "Kampala", "Gulu", "Entebbe"], correct: 1 },
@@ -158,7 +157,7 @@
 
     const App = {
       player: { name: "Guest", phone: "", xp: 0, level: 1, weeklyScore: 0 },
-      gameState: { currentLevel: 1, questionIndex: 0, currentScore: 0, timer: null, timeLeft: 15 },
+      gameState: { currentLevel: 1, questionIndex: 0, currentScore: 0, correctAnswersCount: 0, timer: null, timeLeft: 15 },
       
       init: function() {
         this.loadPlayerData();
@@ -174,7 +173,7 @@
           } else {
             this.player.name = "Player_" + Math.floor(1000 + Math.random() * 9000);
             this.savePlayerData();
-            this.openProfileModal(); // Open registration modal for new users
+            this.openProfileModal();
           }
         } catch(e) {
           this.player.name = "Player_1001";
@@ -221,10 +220,10 @@
           <div class="text-center space-y-4 animate-fade-in">
             <h3 class="text-lg font-bold text-white">Ready for Level ${this.player.level}?</h3>
             <p class="text-xs text-gray-400 leading-relaxed">
-              Answer 5 questions before time runs out. Gain XP to level up and accumulate Weekly Score points for cash payouts.
+              Answer 5 questions. You must score <strong>80% or higher</strong> (4/5 correct) to qualify and unlock the next level!
             </p>
             <button id="startBtn" onclick="App.startQuiz()" class="w-full bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-gray-950 font-black py-3 px-4 rounded-xl transition shadow-lg text-sm uppercase tracking-wider cursor-pointer">
-              Start Quiz (Level ${this.player.level})
+              Start Level ${this.player.level}
             </button>
           </div>
         `;
@@ -233,6 +232,7 @@
       startQuiz: function() {
         this.gameState.currentScore = 0;
         this.gameState.questionIndex = 0;
+        this.gameState.correctAnswersCount = 0;
         this.renderQuestion();
       },
 
@@ -280,6 +280,7 @@
         const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
         const q = levelQuestions[this.gameState.questionIndex];
         if (selectedIndex === q.correct) {
+          this.gameState.correctAnswersCount = (this.gameState.correctAnswersCount || 0) + 1;
           const earned = 100 + (this.gameState.timeLeft * 10);
           this.gameState.currentScore += earned;
         }
@@ -292,27 +293,48 @@
       },
 
       completeLevel: function() {
+        const levelQuestions = QUESTION_BANK[this.player.level] || QUESTION_BANK[1];
+        const totalQuestions = levelQuestions.length;
+        const correctCount = this.gameState.correctAnswersCount || 0;
+        const passAccuracy = (correctCount / totalQuestions) >= 0.80;
+
         const finalScore = this.gameState.currentScore;
         const xpGained = Math.floor(finalScore / 2);
+
         this.player.xp += xpGained;
         this.player.weeklyScore += finalScore;
-        const newLevel = Math.min(3, Math.floor(this.player.xp / 500) + 1);
-        const leveledUp = newLevel > this.player.level;
-        this.player.level = newLevel;
+
+        let levelMsg = "";
+        
+        if (passAccuracy) {
+          const newLevel = Math.min(3, this.player.level + 1);
+          if (newLevel > this.player.level) {
+            this.player.level = newLevel;
+            levelMsg = `<p class="text-green-400 font-bold mt-1">🎉 Passed with ${Math.round((correctCount/totalQuestions)*100)}%! Unlocked Level ${newLevel}!</p>`;
+          } else {
+            levelMsg = `<p class="text-amber-400 font-bold mt-1">🔥 Top tier performance! Max Level reached.</p>`;
+          }
+        } else {
+          levelMsg = `<p class="text-red-400 font-bold mt-1">❌ Scored ${Math.round((correctCount/totalQuestions)*100)}% (${correctCount}/${totalQuestions}). Need 80%+ to unlock next level!</p>`;
+        }
+
         this.savePlayerData();
         Leaderboard.submitScore(this.player.name, this.player.weeklyScore);
-        
+
         const card = document.getElementById("gameCard");
         card.innerHTML = `
           <div class="text-center space-y-4 animate-fade-in">
-            <h3 class="text-xl font-black text-amber-400">Level Complete!</h3>
+            <h3 class="text-xl font-black ${passAccuracy ? 'text-amber-400' : 'text-slate-200'}">
+              ${passAccuracy ? 'Level Passed!' : 'Try Again!'}
+            </h3>
             <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 space-y-1 text-xs">
-              <p class="text-gray-400">Session Score: <strong class="text-white">${finalScore} pts</strong></p>
+              <p class="text-gray-400">Score: <strong class="text-white">${finalScore} pts</strong></p>
+              <p class="text-gray-400">Accuracy: <strong class="${passAccuracy ? 'text-green-400' : 'text-red-400'}">${correctCount} / ${totalQuestions} Correct</strong></p>
               <p class="text-gray-400">XP Gained: <strong class="text-amber-400">+${xpGained} XP</strong></p>
-              ${leveledUp ? `<p class="text-green-400 font-bold mt-1">🎉 Level Up! You unlocked Level ${newLevel}!</p>` : ''}
+              ${levelMsg}
             </div>
             <button onclick="App.renderStartScreen()" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 rounded-xl transition text-sm uppercase tracking-wider cursor-pointer">
-              Continue
+              ${passAccuracy ? 'Continue' : 'Retry Level ' + this.player.level}
             </button>
           </div>
         `;
