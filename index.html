@@ -67,7 +67,7 @@
     <div class="bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 p-4 rounded-xl text-center shadow-lg border border-amber-500/30">
       <p class="text-xs uppercase font-semibold text-amber-100 tracking-wider">Weekly Sponsored Pool</p>
       <h2 class="text-3xl font-black text-white mt-0.5">UGX 25,000</h2>
-      <p class="text-xs text-amber-100 mt-1">Play levels for free. Top 3 scores on Sunday win mobile money payouts.</p>
+      <p class="text-xs text-amber-100 mt-1">Play levels for free. Pass levels (80%+) to earn leaderboard points.</p>
     </div>
 
     <!-- Game Container Card -->
@@ -119,7 +119,6 @@
     const SUPABASE_URL = "https://fyhxysjkvtmstmcsbcee.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aHh5c2prdnRtc3RtY3NiY2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NDgyOTgsImV4cCI6MjEwMjEyNDI5OH0.tkvLTvDuvG04ZRFVqwQVeQWD-r4l2cg50Q4MPZWkIo8";
 
-    // Question Repository (Expandable Pool per Level)
     const QUESTION_BANK = {
       1: [
         { q: "What is the capital city of Uganda?", options: ["Jinja", "Kampala", "Gulu", "Entebbe"], correct: 1 },
@@ -149,7 +148,7 @@
     };
 
     const App = {
-      player: { name: "Guest", phone: "", xp: 0, unlockedLevel: 1, weeklyScore: 0 },
+      player: { name: "Guest", phone: "", xp: 0, unlockedLevel: 1, passedLevels: [], weeklyScore: 0 },
       gameState: { activeLevel: 1, currentQuestions: [], questionIndex: 0, currentScore: 0, correctAnswersCount: 0, timer: null, timeLeft: 15 },
       
       init: function() {
@@ -164,6 +163,7 @@
           if (saved) {
             this.player = Object.assign(this.player, JSON.parse(saved));
             if (!this.player.unlockedLevel) this.player.unlockedLevel = 1;
+            if (!this.player.passedLevels) this.player.passedLevels = [];
           } else {
             this.player.name = "Player_" + Math.floor(1000 + Math.random() * 9000);
             this.savePlayerData();
@@ -205,7 +205,6 @@
         this.renderLevelSelect();
       },
 
-      // Render Level Selection Menu
       renderLevelSelect: function() {
         clearInterval(this.gameState.timer);
         const card = document.getElementById("gameCard");
@@ -214,13 +213,14 @@
 
         for (let l = 1; l <= maxLevels; l++) {
           const isUnlocked = l <= this.player.unlockedLevel;
+          const isPassed = this.player.passedLevels.includes(l);
           levelsHTML += `
             <div class="flex items-center justify-between p-3.5 rounded-xl border ${isUnlocked ? 'bg-gray-800/90 border-gray-700 hover:border-amber-500/50' : 'bg-gray-950/60 border-gray-800/60 opacity-60'} transition">
               <div class="flex items-center space-x-3">
-                <span class="text-lg">${isUnlocked ? (l === this.player.unlockedLevel ? '🔥' : '✅') : '🔒'}</span>
+                <span class="text-lg">${isPassed ? '✅' : (isUnlocked ? '🔥' : '🔒')}</span>
                 <div>
                   <h4 class="text-xs font-black text-white">Level ${l}</h4>
-                  <p class="text-[10px] text-gray-400">${isUnlocked ? 'Available to play' : 'Score 80%+ on Level ' + (l-1) + ' to unlock'}</p>
+                  <p class="text-[10px] text-gray-400">${isPassed ? 'Passed (Practice Mode)' : (isUnlocked ? 'Required 80%+ to pass & unlock next' : 'Score 80%+ on Level ' + (l-1) + ' to unlock')}</p>
                 </div>
               </div>
               <button 
@@ -250,11 +250,9 @@
         if (levelNum > this.player.unlockedLevel) return;
         this.gameState.activeLevel = levelNum;
         
-        // Prepare Fisher-Yates shuffled question set
         const rawPool = QUESTION_BANK[levelNum] || QUESTION_BANK[1];
         let shuffled = [...rawPool].sort(() => Math.random() - 0.5).slice(0, 5);
         
-        // Shuffle answer options dynamically for each question
         this.gameState.currentQuestions = shuffled.map(item => {
           const optionsWithIndex = item.options.map((opt, i) => ({ text: opt, isCorrect: i === item.correct }));
           optionsWithIndex.sort(() => Math.random() - 0.5);
@@ -333,45 +331,59 @@
         const totalQuestions = this.gameState.currentQuestions.length;
         const correctCount = this.gameState.correctAnswersCount;
         const passAccuracy = (correctCount / totalQuestions) >= 0.80;
+        const activeLevel = this.gameState.activeLevel;
 
         const finalScore = this.gameState.currentScore;
         const xpGained = Math.floor(finalScore / 2);
 
         this.player.xp += xpGained;
-        this.player.weeklyScore += finalScore;
 
         let levelMsg = "";
+        let pointsAddedToLeaderboard = false;
         
         if (passAccuracy) {
-          const newlyUnlocked = Math.min(3, this.gameState.activeLevel + 1);
-          if (newlyUnlocked > this.player.unlockedLevel) {
-            this.player.unlockedLevel = newlyUnlocked;
-            levelMsg = `<p class="text-green-400 font-bold mt-1">🎉 80%+ Passed! Level ${newlyUnlocked} Unlocked!</p>`;
+          // Check if this is the first time passing this specific level
+          if (!this.player.passedLevels.includes(activeLevel)) {
+            this.player.passedLevels.push(activeLevel);
+            this.player.weeklyScore += finalScore;
+            pointsAddedToLeaderboard = true;
+
+            const nextLevel = Math.min(3, activeLevel + 1);
+            if (nextLevel > this.player.unlockedLevel) {
+              this.player.unlockedLevel = nextLevel;
+              levelMsg = `<p class="text-green-400 font-bold mt-1">🎉 80%+ Scored! Level ${nextLevel} Unlocked & +${finalScore} pts added to Leaderboard!</p>`;
+            } else {
+              levelMsg = `<p class="text-green-400 font-bold mt-1">🎉 80%+ Scored! Level ${activeLevel} Passed & +${finalScore} pts added to Leaderboard!</p>`;
+            }
           } else {
-            levelMsg = `<p class="text-amber-400 font-bold mt-1">🔥 Excellent score recorded!</p>`;
+            // Already passed previously -> no extra leaderboard points
+            levelMsg = `<p class="text-amber-400 font-bold mt-1">⭐ Level already passed! Replay mode complete (No extra leaderboard points).</p>`;
           }
         } else {
-          levelMsg = `<p class="text-red-400 font-bold mt-1">❌ Scored ${Math.round((correctCount/totalQuestions)*100)}% (${correctCount}/${totalQuestions}). Need 80%+ to unlock next level!</p>`;
+          levelMsg = `<p class="text-red-400 font-bold mt-1">❌ Scored ${Math.round((correctCount/totalQuestions)*100)}% (${correctCount}/${totalQuestions}). Need 80%+ to pass & submit leaderboard points!</p>`;
         }
 
         this.savePlayerData();
-        Leaderboard.submitScore(this.player.name, this.player.weeklyScore);
+
+        if (pointsAddedToLeaderboard) {
+          Leaderboard.submitScore(this.player.name, this.player.weeklyScore);
+        }
 
         const card = document.getElementById("gameCard");
         card.innerHTML = `
           <div class="text-center space-y-4 animate-fade-in">
             <h3 class="text-xl font-black ${passAccuracy ? 'text-amber-400' : 'text-slate-200'}">
-              ${passAccuracy ? 'Level Completed!' : 'Try Again!'}
+              ${passAccuracy ? 'Level Passed!' : 'Try Again!'}
             </h3>
             <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 space-y-1 text-xs">
               <p class="text-gray-400">Score Earned: <strong class="text-white">${finalScore} pts</strong></p>
               <p class="text-gray-400">Accuracy: <strong class="${passAccuracy ? 'text-green-400' : 'text-red-400'}">${correctCount} / ${totalQuestions} Correct (${Math.round((correctCount/totalQuestions)*100)}%)</strong></p>
-              <p class="text-gray-400">XP Gained: <strong class="text-amber-400">+${xpGained} XP</strong></p>
+              <p class="text-gray-400">Leaderboard Status: <strong class="${pointsAddedToLeaderboard ? 'text-green-400' : 'text-gray-500'}">${pointsAddedToLeaderboard ? 'Points Submitted!' : 'No Score Added'}</strong></p>
               ${levelMsg}
             </div>
             <div class="flex gap-2">
-              <button onclick="App.selectLevel(${this.gameState.activeLevel})" class="w-1/2 bg-gray-800 hover:bg-gray-700 text-slate-200 font-bold py-3 rounded-xl transition text-xs uppercase tracking-wider cursor-pointer">
-                Replay Lvl ${this.gameState.activeLevel}
+              <button onclick="App.selectLevel(${activeLevel})" class="w-1/2 bg-gray-800 hover:bg-gray-700 text-slate-200 font-bold py-3 rounded-xl transition text-xs uppercase tracking-wider cursor-pointer">
+                Replay Lvl ${activeLevel}
               </button>
               <button onclick="App.renderLevelSelect()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-black py-3 rounded-xl transition text-xs uppercase tracking-wider cursor-pointer">
                 Level Menu
