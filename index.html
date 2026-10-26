@@ -77,6 +77,34 @@
       </div>
     </section>
 
+    <!-- Adsterra 320x50 Mobile Banner Ad Slot[cite: 5, 7] -->
+    <div class="w-full bg-gray-900 border border-gray-800 p-2 rounded-xl flex justify-center items-center overflow-hidden min-h-[60px]">
+      <script>
+        atOptions = {
+          'key' : '6616e6fa152d4293f7a269717be807',
+          'format' : 'iframe',
+          'height' : 50,
+          'width' : 320,
+          'params' : {}
+        };
+      </script>
+      <script type="text/javascript" src="//www.highperformanceformat.com/6616e6fa152d4293f7a269717be807/invoke.js"></script>
+    </div>
+
+    <!-- Adsterra 300x250 Banner Ad Slot[cite: 5, 6] -->
+    <div class="w-full bg-gray-900 border border-gray-800 p-2 rounded-xl flex justify-center items-center overflow-hidden min-h-[260px]">
+      <script>
+        atOptions = {
+          'key' : '280f31319941f74b6f4afa3871f8af01',
+          'format' : 'iframe',
+          'height' : 250,
+          'width' : 300,
+          'params' : {}
+        };
+      </script>
+      <script type="text/javascript" src="//www.highperformanceformat.com/280f31319941f74b6f4afa3871f8af01/invoke.js"></script>
+    </div>
+
     <!-- Global Leaderboard -->
     <section class="bg-gray-900 p-4 rounded-xl border border-gray-800">
       <div class="flex justify-between items-center mb-3">
@@ -87,6 +115,12 @@
         <li class="text-center text-gray-500 py-2">Loading scores...</li>
       </ul>
     </section>
+
+    <!-- Adsterra Native Banner Ad Slot[cite: 8] -->
+    <div class="w-full bg-gray-900 border border-gray-800 p-3 rounded-xl flex flex-col justify-center items-center overflow-hidden">
+      <script async="async" data-cfasync="false" src="https://bicea.org/21/a3dae65368808837bfc1f0e109ec8f47"></script>
+      <div id="container-a3dae65368808837bfc1f0e109ec8f47"></div>
+    </div>
 
   </main>
 
@@ -342,7 +376,6 @@
         let pointsAddedToLeaderboard = false;
         
         if (passAccuracy) {
-          // Check if this is the first time passing this specific level
           if (!this.player.passedLevels.includes(activeLevel)) {
             this.player.passedLevels.push(activeLevel);
             this.player.weeklyScore += finalScore;
@@ -356,7 +389,6 @@
               levelMsg = `<p class="text-green-400 font-bold mt-1">🎉 80%+ Scored! Level ${activeLevel} Passed & +${finalScore} pts added to Leaderboard!</p>`;
             }
           } else {
-            // Already passed previously -> no extra leaderboard points
             levelMsg = `<p class="text-amber-400 font-bold mt-1">⭐ Level already passed! Replay mode complete (No extra leaderboard points).</p>`;
           }
         } else {
